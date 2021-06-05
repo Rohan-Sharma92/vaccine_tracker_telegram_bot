@@ -5,7 +5,6 @@ use_plugin("python.core")
 use_plugin("python.unittest")
 #use_plugin("python.coverage")
 use_plugin("python.distutils")
-use_plugin("python.install_dependencies")
 
 name = "vaccine_tracker_telegram_bot"
 default_task = "publish"
