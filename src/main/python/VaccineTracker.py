@@ -132,24 +132,48 @@ def isSuccess(res: Response) -> bool:
     found = False;
     json_obj = res.json_obj
     logger.info("Response: %s", json_obj)
-    names = []
+    vaccineDetails={}
+    centreDetails=[]
+    isPin=res.type=='PIN'
     if json_obj is not None:
         s1 = json.dumps(json_obj)
         result = json.loads(s1)
         key = None
-        if(res.type == 'PIN'):
+        if(isPin):
             key = 'sessions'
         else:
             key = 'centers'
-        for centre in result[key]:
+        for details in result[key]:
             # if centre['name']=="DGD Bank Enclave PHC":
-            names.append(centre['name'])
+            if(isPin):
+                key=details['vaccine']
+                if( key not in vaccineDetails):
+                    vaccineDetails[key]=[]
+                vaccineDetails[key].append(details['name'])
+                #vaccineDetails.append(("name:"+details['name']+",vaccine:"+details['vaccine']))
+            else:
+                centreDetails.append(details['name'])
             # responseQueue.put_nowait(centre['name'])
             found = True
     if found:
-        msg = "Following centres are available:\n\n"
-        msg += '\n'.join(names)
-        responseQueue.put_nowait(msg)
+        text=""
+        if(isPin):
+            for key,value in vaccineDetails.items():
+               msg=key+":\n\n"
+               msg+="\n".join(value) +"\n"
+               text+=msg 
+            # msg=json.dumps(vaccineDetails)
+            # df=pd.read_json(msg)
+            # df.index = np.arange(1, len(df))
+            # text= df.to_string()
+            print(text)
+        else:
+            text="\n".join(centreDetails)
+        # if(isPin):
+        #     
+        # else:
+        #     text= pd.DataFrame(vaccineDetails, columns=['name'])
+        responseQueue.put_nowait(text)
     return found
 
 
@@ -188,10 +212,12 @@ def complete(update: Update, context: CallbackContext):
 
 
 def sendMessage(update: Update):
+    res = "Following centres are available:\n\n"
     while True:
-        res = responseQueue.get(block=True)
+        res+= responseQueue.get(block=True)
         # x = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         # prettyPrint=json.dumps(res)
+        
         update.message.reply_text(res,
                                       reply_markup=ReplyKeyboardRemove(),)
         break
@@ -266,7 +292,7 @@ def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater("")
+    updater = Updater("1792093561:AAGOSgqVvQXLlImm-U_YE6zrOKZ6qsxNgVY")
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
